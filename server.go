@@ -50,7 +50,7 @@ func main() {
 
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:     []string{"*"},
-		AllowedMethods:     []string{"GET,POST,PUT,DELETE,OPTIONS"},
+		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials:   true,
 		Debug:              true,
 		OptionsPassthrough: true,
