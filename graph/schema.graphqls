@@ -1,0 +1,14 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+
+input tenantInput {
+	cloud: String!
+	tenantIds: [String!]!
+}
+
+extend type Query {
+	tracks(tenexIds: tenantInput!): [Account!]!
+}
