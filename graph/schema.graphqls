@@ -4,6 +4,16 @@
 
 scalar Time
 
+input DBConnection {
+	host: String!
+	user: String!
+	password: String!
+	dbname: String!
+	port: Int!
+	sslmode: String!
+}
+
 extend type Query {
 	jaw: User!
+	dbConnection(cred: DBConnection): Int!
 }

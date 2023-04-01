@@ -14,6 +14,8 @@ import (
 	"entgo.io/contrib/entgql"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -42,6 +44,17 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
+
+	// CORS and router
+	router := chi.NewRouter()
+
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:     []string{"*"},
+		AllowedMethods:     []string{"GET,POST,PUT,DELETE,OPTIONS"},
+		AllowCredentials:   true,
+		Debug:              true,
+		OptionsPassthrough: true,
+	}).Handler)
 
 	// set TTL
 	t, err := strconv.ParseInt(os.Getenv("CACHE_TTL"), 10, 0)
@@ -73,10 +86,10 @@ func main() {
 		return next(ctx)
 	})
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
 	// endpoint for chache stats
-	http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
 		if entCacheDriver != nil {
 			stat := entCacheDriver.Stats()
 			fmt.Fprintf(w, "cache stats (gets: %d, hits: %d, errors: %d)\n", stat.Gets, stat.Hits, stat.Errors)
@@ -86,7 +99,7 @@ func main() {
 	})
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
 func getDSN(url string) string {
