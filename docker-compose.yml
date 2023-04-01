@@ -1,0 +1,35 @@
+version: "3"
+services:
+  jaw-postgres:
+    image: postgres:12.10
+    network_mode: bridge
+    container_name: jaw-postgres
+    volumes:
+      - jaw-data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+
+  jaw-platform:
+    image: jaw-platform:latest
+    network_mode: bridge
+    container_name: jaw-platform
+    build: .
+    env_file:
+      - .env
+    expose:
+      - 8880
+    ports:
+      - 8880:8880
+    depends_on:
+      - jaw-postgres
+    links:
+      - jaw-postgres
+
+volumes:
+  jaw-data:
