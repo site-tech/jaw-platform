@@ -139,8 +139,14 @@ func newDialectDriver(ctx context.Context) dialect.Driver {
 
 	// launch redis client
 	fullURL := os.Getenv("REDIS_URL")
-	pwd := strings.Split(fullURL, "@")[0][9:]
-	addr := strings.Split(fullURL, "@")[1]
+	pwd := ""
+	addr := ""
+	if strings.Contains(fullURL, "@") {
+		pwd = strings.Split(fullURL, "@")[0][9:]
+		addr = strings.Split(fullURL, "@")[1]
+	} else {
+		addr = strings.Split(fullURL, "redis://")[1]
+	}
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: pwd,
