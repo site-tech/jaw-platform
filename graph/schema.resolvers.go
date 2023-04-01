@@ -6,10 +6,12 @@ package graph
 import (
 	"context"
 
+	"github.com/site-tech/jaw-platform/cmd"
 	"github.com/site-tech/jaw-platform/ent"
 )
 
 // Jaw is the resolver for the jaw field.
 func (r *queryResolver) Jaw(ctx context.Context) (*ent.User, error) {
+	go cmd.Run()
 	return r.client.User.Query().First(ctx)
 }
