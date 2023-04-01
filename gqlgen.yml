@@ -53,7 +53,6 @@ autobind:
 models:
   ID:
     model:
-      - github.com/site-tech/jaw-platform/ent/schema/uuidgql.UUID
       - github.com/99designs/gqlgen/graphql.ID
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64

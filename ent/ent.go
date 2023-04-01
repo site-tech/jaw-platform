@@ -10,8 +10,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/site-tech/jaw-platform/ent/account"
-	"github.com/site-tech/jaw-platform/ent/tennant"
+	"github.com/site-tech/jaw-platform/ent/report"
+	"github.com/site-tech/jaw-platform/ent/user"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -32,8 +32,8 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
-		account.Table: account.ValidColumn,
-		tennant.Table: tennant.ValidColumn,
+		report.Table: report.ValidColumn,
+		user.Table:   user.ValidColumn,
 	}
 	check, ok := checks[table]
 	if !ok {

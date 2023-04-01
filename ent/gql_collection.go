@@ -10,46 +10,30 @@ import (
 )
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
-func (a *AccountQuery) CollectFields(ctx context.Context, satisfies ...string) (*AccountQuery, error) {
+func (r *ReportQuery) CollectFields(ctx context.Context, satisfies ...string) (*ReportQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
-		return a, nil
+		return r, nil
 	}
-	if err := a.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+	if err := r.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
 		return nil, err
 	}
-	return a, nil
+	return r, nil
 }
 
-func (a *AccountQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+func (r *ReportQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
 	path = append([]string(nil), path...)
-	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
-		switch field.Name {
-		case "tennants":
-			var (
-				alias = field.Alias
-				path  = append(path, alias)
-				query = &TennantQuery{config: a.config}
-			)
-			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
-				return err
-			}
-			a.WithNamedTennants(alias, func(wq *TennantQuery) {
-				*wq = *query
-			})
-		}
-	}
 	return nil
 }
 
-type accountPaginateArgs struct {
+type reportPaginateArgs struct {
 	first, last   *int
 	after, before *Cursor
-	opts          []AccountPaginateOption
+	opts          []ReportPaginateOption
 }
 
-func newAccountPaginateArgs(rv map[string]interface{}) *accountPaginateArgs {
-	args := &accountPaginateArgs{}
+func newReportPaginateArgs(rv map[string]interface{}) *reportPaginateArgs {
+	args := &reportPaginateArgs{}
 	if rv == nil {
 		return args
 	}
@@ -65,51 +49,37 @@ func newAccountPaginateArgs(rv map[string]interface{}) *accountPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
-	if v, ok := rv[whereField].(*AccountWhereInput); ok {
-		args.opts = append(args.opts, WithAccountFilter(v.Filter))
+	if v, ok := rv[whereField].(*ReportWhereInput); ok {
+		args.opts = append(args.opts, WithReportFilter(v.Filter))
 	}
 	return args
 }
 
 // CollectFields tells the query-builder to eagerly load connected nodes by resolver context.
-func (t *TennantQuery) CollectFields(ctx context.Context, satisfies ...string) (*TennantQuery, error) {
+func (u *UserQuery) CollectFields(ctx context.Context, satisfies ...string) (*UserQuery, error) {
 	fc := graphql.GetFieldContext(ctx)
 	if fc == nil {
-		return t, nil
+		return u, nil
 	}
-	if err := t.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
+	if err := u.collectField(ctx, graphql.GetOperationContext(ctx), fc.Field, nil, satisfies...); err != nil {
 		return nil, err
 	}
-	return t, nil
+	return u, nil
 }
 
-func (t *TennantQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
+func (u *UserQuery) collectField(ctx context.Context, op *graphql.OperationContext, field graphql.CollectedField, path []string, satisfies ...string) error {
 	path = append([]string(nil), path...)
-	for _, field := range graphql.CollectFields(op, field.Selections, satisfies) {
-		switch field.Name {
-		case "account":
-			var (
-				alias = field.Alias
-				path  = append(path, alias)
-				query = &AccountQuery{config: t.config}
-			)
-			if err := query.collectField(ctx, op, field, path, satisfies...); err != nil {
-				return err
-			}
-			t.withAccount = query
-		}
-	}
 	return nil
 }
 
-type tennantPaginateArgs struct {
+type userPaginateArgs struct {
 	first, last   *int
 	after, before *Cursor
-	opts          []TennantPaginateOption
+	opts          []UserPaginateOption
 }
 
-func newTennantPaginateArgs(rv map[string]interface{}) *tennantPaginateArgs {
-	args := &tennantPaginateArgs{}
+func newUserPaginateArgs(rv map[string]interface{}) *userPaginateArgs {
+	args := &userPaginateArgs{}
 	if rv == nil {
 		return args
 	}
@@ -125,8 +95,8 @@ func newTennantPaginateArgs(rv map[string]interface{}) *tennantPaginateArgs {
 	if v := rv[beforeField]; v != nil {
 		args.before = v.(*Cursor)
 	}
-	if v, ok := rv[whereField].(*TennantWhereInput); ok {
-		args.opts = append(args.opts, WithTennantFilter(v.Filter))
+	if v, ok := rv[whereField].(*UserWhereInput); ok {
+		args.opts = append(args.opts, WithUserFilter(v.Filter))
 	}
 	return args
 }

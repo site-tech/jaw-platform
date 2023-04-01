@@ -6,8 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Account is the predicate function for account builders.
-type Account func(*sql.Selector)
+// Report is the predicate function for report builders.
+type Report func(*sql.Selector)
 
-// Tennant is the predicate function for tennant builders.
-type Tennant func(*sql.Selector)
+// User is the predicate function for user builders.
+type User func(*sql.Selector)

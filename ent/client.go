@@ -9,14 +9,12 @@ import (
 	"log"
 
 	"github.com/site-tech/jaw-platform/ent/migrate"
-	"github.com/google/uuid"
 
-	"github.com/site-tech/jaw-platform/ent/account"
-	"github.com/site-tech/jaw-platform/ent/tennant"
+	"github.com/site-tech/jaw-platform/ent/report"
+	"github.com/site-tech/jaw-platform/ent/user"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
-	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -24,10 +22,12 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Account is the client for interacting with the Account builders.
-	Account *AccountClient
-	// Tennant is the client for interacting with the Tennant builders.
-	Tennant *TennantClient
+	// Report is the client for interacting with the Report builders.
+	Report *ReportClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
+	// additional fields for node api
+	tables tables
 }
 
 // NewClient creates a new client configured with the given options.
@@ -41,8 +41,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Account = NewAccountClient(c.config)
-	c.Tennant = NewTennantClient(c.config)
+	c.Report = NewReportClient(c.config)
+	c.User = NewUserClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -74,10 +74,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Account: NewAccountClient(cfg),
-		Tennant: NewTennantClient(cfg),
+		ctx:    ctx,
+		config: cfg,
+		Report: NewReportClient(cfg),
+		User:   NewUserClient(cfg),
 	}, nil
 }
 
@@ -95,17 +95,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:     ctx,
-		config:  cfg,
-		Account: NewAccountClient(cfg),
-		Tennant: NewTennantClient(cfg),
+		ctx:    ctx,
+		config: cfg,
+		Report: NewReportClient(cfg),
+		User:   NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Account.
+//		Report.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -127,88 +127,88 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Account.Use(hooks...)
-	c.Tennant.Use(hooks...)
+	c.Report.Use(hooks...)
+	c.User.Use(hooks...)
 }
 
-// AccountClient is a client for the Account schema.
-type AccountClient struct {
+// ReportClient is a client for the Report schema.
+type ReportClient struct {
 	config
 }
 
-// NewAccountClient returns a client for the Account from the given config.
-func NewAccountClient(c config) *AccountClient {
-	return &AccountClient{config: c}
+// NewReportClient returns a client for the Report from the given config.
+func NewReportClient(c config) *ReportClient {
+	return &ReportClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `account.Hooks(f(g(h())))`.
-func (c *AccountClient) Use(hooks ...Hook) {
-	c.hooks.Account = append(c.hooks.Account, hooks...)
+// A call to `Use(f, g, h)` equals to `report.Hooks(f(g(h())))`.
+func (c *ReportClient) Use(hooks ...Hook) {
+	c.hooks.Report = append(c.hooks.Report, hooks...)
 }
 
-// Create returns a builder for creating a Account entity.
-func (c *AccountClient) Create() *AccountCreate {
-	mutation := newAccountMutation(c.config, OpCreate)
-	return &AccountCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Report entity.
+func (c *ReportClient) Create() *ReportCreate {
+	mutation := newReportMutation(c.config, OpCreate)
+	return &ReportCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Account entities.
-func (c *AccountClient) CreateBulk(builders ...*AccountCreate) *AccountCreateBulk {
-	return &AccountCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Report entities.
+func (c *ReportClient) CreateBulk(builders ...*ReportCreate) *ReportCreateBulk {
+	return &ReportCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Account.
-func (c *AccountClient) Update() *AccountUpdate {
-	mutation := newAccountMutation(c.config, OpUpdate)
-	return &AccountUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Report.
+func (c *ReportClient) Update() *ReportUpdate {
+	mutation := newReportMutation(c.config, OpUpdate)
+	return &ReportUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *AccountClient) UpdateOne(a *Account) *AccountUpdateOne {
-	mutation := newAccountMutation(c.config, OpUpdateOne, withAccount(a))
-	return &AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ReportClient) UpdateOne(r *Report) *ReportUpdateOne {
+	mutation := newReportMutation(c.config, OpUpdateOne, withReport(r))
+	return &ReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *AccountClient) UpdateOneID(id uuid.UUID) *AccountUpdateOne {
-	mutation := newAccountMutation(c.config, OpUpdateOne, withAccountID(id))
-	return &AccountUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ReportClient) UpdateOneID(id int) *ReportUpdateOne {
+	mutation := newReportMutation(c.config, OpUpdateOne, withReportID(id))
+	return &ReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Account.
-func (c *AccountClient) Delete() *AccountDelete {
-	mutation := newAccountMutation(c.config, OpDelete)
-	return &AccountDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Report.
+func (c *ReportClient) Delete() *ReportDelete {
+	mutation := newReportMutation(c.config, OpDelete)
+	return &ReportDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *AccountClient) DeleteOne(a *Account) *AccountDeleteOne {
-	return c.DeleteOneID(a.ID)
+func (c *ReportClient) DeleteOne(r *Report) *ReportDeleteOne {
+	return c.DeleteOneID(r.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *AccountClient) DeleteOneID(id uuid.UUID) *AccountDeleteOne {
-	builder := c.Delete().Where(account.ID(id))
+func (c *ReportClient) DeleteOneID(id int) *ReportDeleteOne {
+	builder := c.Delete().Where(report.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &AccountDeleteOne{builder}
+	return &ReportDeleteOne{builder}
 }
 
-// Query returns a query builder for Account.
-func (c *AccountClient) Query() *AccountQuery {
-	return &AccountQuery{
+// Query returns a query builder for Report.
+func (c *ReportClient) Query() *ReportQuery {
+	return &ReportQuery{
 		config: c.config,
 	}
 }
 
-// Get returns a Account entity by its id.
-func (c *AccountClient) Get(ctx context.Context, id uuid.UUID) (*Account, error) {
-	return c.Query().Where(account.ID(id)).Only(ctx)
+// Get returns a Report entity by its id.
+func (c *ReportClient) Get(ctx context.Context, id int) (*Report, error) {
+	return c.Query().Where(report.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *AccountClient) GetX(ctx context.Context, id uuid.UUID) *Account {
+func (c *ReportClient) GetX(ctx context.Context, id int) *Report {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -216,105 +216,89 @@ func (c *AccountClient) GetX(ctx context.Context, id uuid.UUID) *Account {
 	return obj
 }
 
-// QueryTennants queries the tennants edge of a Account.
-func (c *AccountClient) QueryTennants(a *Account) *TennantQuery {
-	query := &TennantQuery{config: c.config}
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := a.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(account.Table, account.FieldID, id),
-			sqlgraph.To(tennant.Table, tennant.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, account.TennantsTable, account.TennantsColumn),
-		)
-		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
-func (c *AccountClient) Hooks() []Hook {
-	return c.hooks.Account
+func (c *ReportClient) Hooks() []Hook {
+	return c.hooks.Report
 }
 
-// TennantClient is a client for the Tennant schema.
-type TennantClient struct {
+// UserClient is a client for the User schema.
+type UserClient struct {
 	config
 }
 
-// NewTennantClient returns a client for the Tennant from the given config.
-func NewTennantClient(c config) *TennantClient {
-	return &TennantClient{config: c}
+// NewUserClient returns a client for the User from the given config.
+func NewUserClient(c config) *UserClient {
+	return &UserClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `tennant.Hooks(f(g(h())))`.
-func (c *TennantClient) Use(hooks ...Hook) {
-	c.hooks.Tennant = append(c.hooks.Tennant, hooks...)
+// A call to `Use(f, g, h)` equals to `user.Hooks(f(g(h())))`.
+func (c *UserClient) Use(hooks ...Hook) {
+	c.hooks.User = append(c.hooks.User, hooks...)
 }
 
-// Create returns a builder for creating a Tennant entity.
-func (c *TennantClient) Create() *TennantCreate {
-	mutation := newTennantMutation(c.config, OpCreate)
-	return &TennantCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a User entity.
+func (c *UserClient) Create() *UserCreate {
+	mutation := newUserMutation(c.config, OpCreate)
+	return &UserCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Tennant entities.
-func (c *TennantClient) CreateBulk(builders ...*TennantCreate) *TennantCreateBulk {
-	return &TennantCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of User entities.
+func (c *UserClient) CreateBulk(builders ...*UserCreate) *UserCreateBulk {
+	return &UserCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Tennant.
-func (c *TennantClient) Update() *TennantUpdate {
-	mutation := newTennantMutation(c.config, OpUpdate)
-	return &TennantUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for User.
+func (c *UserClient) Update() *UserUpdate {
+	mutation := newUserMutation(c.config, OpUpdate)
+	return &UserUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *TennantClient) UpdateOne(t *Tennant) *TennantUpdateOne {
-	mutation := newTennantMutation(c.config, OpUpdateOne, withTennant(t))
-	return &TennantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *TennantClient) UpdateOneID(id uuid.UUID) *TennantUpdateOne {
-	mutation := newTennantMutation(c.config, OpUpdateOne, withTennantID(id))
-	return &TennantUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
+	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Tennant.
-func (c *TennantClient) Delete() *TennantDelete {
-	mutation := newTennantMutation(c.config, OpDelete)
-	return &TennantDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for User.
+func (c *UserClient) Delete() *UserDelete {
+	mutation := newUserMutation(c.config, OpDelete)
+	return &UserDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *TennantClient) DeleteOne(t *Tennant) *TennantDeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
+	return c.DeleteOneID(u.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TennantClient) DeleteOneID(id uuid.UUID) *TennantDeleteOne {
-	builder := c.Delete().Where(tennant.ID(id))
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &TennantDeleteOne{builder}
+	return &UserDeleteOne{builder}
 }
 
-// Query returns a query builder for Tennant.
-func (c *TennantClient) Query() *TennantQuery {
-	return &TennantQuery{
+// Query returns a query builder for User.
+func (c *UserClient) Query() *UserQuery {
+	return &UserQuery{
 		config: c.config,
 	}
 }
 
-// Get returns a Tennant entity by its id.
-func (c *TennantClient) Get(ctx context.Context, id uuid.UUID) (*Tennant, error) {
-	return c.Query().Where(tennant.ID(id)).Only(ctx)
+// Get returns a User entity by its id.
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *TennantClient) GetX(ctx context.Context, id uuid.UUID) *Tennant {
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -322,23 +306,7 @@ func (c *TennantClient) GetX(ctx context.Context, id uuid.UUID) *Tennant {
 	return obj
 }
 
-// QueryAccount queries the account edge of a Tennant.
-func (c *TennantClient) QueryAccount(t *Tennant) *AccountQuery {
-	query := &AccountQuery{config: c.config}
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tennant.Table, tennant.FieldID, id),
-			sqlgraph.To(account.Table, account.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tennant.AccountTable, tennant.AccountColumn),
-		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
-func (c *TennantClient) Hooks() []Hook {
-	return c.hooks.Tennant
+func (c *UserClient) Hooks() []Hook {
+	return c.hooks.User
 }

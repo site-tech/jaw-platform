@@ -5,74 +5,43 @@ package ent
 import (
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/site-tech/jaw-platform/ent/account"
 	"github.com/site-tech/jaw-platform/ent/predicate"
-	"github.com/site-tech/jaw-platform/ent/tennant"
-	"github.com/google/uuid"
+	"github.com/site-tech/jaw-platform/ent/report"
+	"github.com/site-tech/jaw-platform/ent/user"
 )
 
-// AccountWhereInput represents a where input for filtering Account queries.
-type AccountWhereInput struct {
-	Predicates []predicate.Account  `json:"-"`
-	Not        *AccountWhereInput   `json:"not,omitempty"`
-	Or         []*AccountWhereInput `json:"or,omitempty"`
-	And        []*AccountWhereInput `json:"and,omitempty"`
+// ReportWhereInput represents a where input for filtering Report queries.
+type ReportWhereInput struct {
+	Predicates []predicate.Report  `json:"-"`
+	Not        *ReportWhereInput   `json:"not,omitempty"`
+	Or         []*ReportWhereInput `json:"or,omitempty"`
+	And        []*ReportWhereInput `json:"and,omitempty"`
 
 	// "id" field predicates.
-	ID      *uuid.UUID  `json:"id,omitempty"`
-	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
-	IDIn    []uuid.UUID `json:"idIn,omitempty"`
-	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
-	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
-	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
-	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
-	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
-
-	// "name" field predicates.
-	Name             *string  `json:"name,omitempty"`
-	NameNEQ          *string  `json:"nameNEQ,omitempty"`
-	NameIn           []string `json:"nameIn,omitempty"`
-	NameNotIn        []string `json:"nameNotIn,omitempty"`
-	NameGT           *string  `json:"nameGT,omitempty"`
-	NameGTE          *string  `json:"nameGTE,omitempty"`
-	NameLT           *string  `json:"nameLT,omitempty"`
-	NameLTE          *string  `json:"nameLTE,omitempty"`
-	NameContains     *string  `json:"nameContains,omitempty"`
-	NameHasPrefix    *string  `json:"nameHasPrefix,omitempty"`
-	NameHasSuffix    *string  `json:"nameHasSuffix,omitempty"`
-	NameEqualFold    *string  `json:"nameEqualFold,omitempty"`
-	NameContainsFold *string  `json:"nameContainsFold,omitempty"`
-
-	// "created_at" field predicates.
-	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
-	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
-	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
-	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
-	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
-	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
-	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
-	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
-
-	// "tennants" edge predicates.
-	HasTennants     *bool                `json:"hasTennants,omitempty"`
-	HasTennantsWith []*TennantWhereInput `json:"hasTennantsWith,omitempty"`
+	ID      *int  `json:"id,omitempty"`
+	IDNEQ   *int  `json:"idNEQ,omitempty"`
+	IDIn    []int `json:"idIn,omitempty"`
+	IDNotIn []int `json:"idNotIn,omitempty"`
+	IDGT    *int  `json:"idGT,omitempty"`
+	IDGTE   *int  `json:"idGTE,omitempty"`
+	IDLT    *int  `json:"idLT,omitempty"`
+	IDLTE   *int  `json:"idLTE,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
-func (i *AccountWhereInput) AddPredicates(predicates ...predicate.Account) {
+func (i *ReportWhereInput) AddPredicates(predicates ...predicate.Report) {
 	i.Predicates = append(i.Predicates, predicates...)
 }
 
-// Filter applies the AccountWhereInput filter on the AccountQuery builder.
-func (i *AccountWhereInput) Filter(q *AccountQuery) (*AccountQuery, error) {
+// Filter applies the ReportWhereInput filter on the ReportQuery builder.
+func (i *ReportWhereInput) Filter(q *ReportQuery) (*ReportQuery, error) {
 	if i == nil {
 		return q, nil
 	}
 	p, err := i.P()
 	if err != nil {
-		if err == ErrEmptyAccountWhereInput {
+		if err == ErrEmptyReportWhereInput {
 			return q, nil
 		}
 		return nil, err
@@ -80,19 +49,19 @@ func (i *AccountWhereInput) Filter(q *AccountQuery) (*AccountQuery, error) {
 	return q.Where(p), nil
 }
 
-// ErrEmptyAccountWhereInput is returned in case the AccountWhereInput is empty.
-var ErrEmptyAccountWhereInput = errors.New("ent: empty predicate AccountWhereInput")
+// ErrEmptyReportWhereInput is returned in case the ReportWhereInput is empty.
+var ErrEmptyReportWhereInput = errors.New("ent: empty predicate ReportWhereInput")
 
-// P returns a predicate for filtering accounts.
+// P returns a predicate for filtering reports.
 // An error is returned if the input is empty or invalid.
-func (i *AccountWhereInput) P() (predicate.Account, error) {
-	var predicates []predicate.Account
+func (i *ReportWhereInput) P() (predicate.Report, error) {
+	var predicates []predicate.Report
 	if i.Not != nil {
 		p, err := i.Not.P()
 		if err != nil {
 			return nil, fmt.Errorf("%w: field 'not'", err)
 		}
-		predicates = append(predicates, account.Not(p))
+		predicates = append(predicates, report.Not(p))
 	}
 	switch n := len(i.Or); {
 	case n == 1:
@@ -102,7 +71,7 @@ func (i *AccountWhereInput) P() (predicate.Account, error) {
 		}
 		predicates = append(predicates, p)
 	case n > 1:
-		or := make([]predicate.Account, 0, n)
+		or := make([]predicate.Report, 0, n)
 		for _, w := range i.Or {
 			p, err := w.P()
 			if err != nil {
@@ -110,7 +79,7 @@ func (i *AccountWhereInput) P() (predicate.Account, error) {
 			}
 			or = append(or, p)
 		}
-		predicates = append(predicates, account.Or(or...))
+		predicates = append(predicates, report.Or(or...))
 	}
 	switch n := len(i.And); {
 	case n == 1:
@@ -120,7 +89,7 @@ func (i *AccountWhereInput) P() (predicate.Account, error) {
 		}
 		predicates = append(predicates, p)
 	case n > 1:
-		and := make([]predicate.Account, 0, n)
+		and := make([]predicate.Report, 0, n)
 		for _, w := range i.And {
 			p, err := w.P()
 			if err != nil {
@@ -128,206 +97,75 @@ func (i *AccountWhereInput) P() (predicate.Account, error) {
 			}
 			and = append(and, p)
 		}
-		predicates = append(predicates, account.And(and...))
+		predicates = append(predicates, report.And(and...))
 	}
 	predicates = append(predicates, i.Predicates...)
 	if i.ID != nil {
-		predicates = append(predicates, account.IDEQ(*i.ID))
+		predicates = append(predicates, report.IDEQ(*i.ID))
 	}
 	if i.IDNEQ != nil {
-		predicates = append(predicates, account.IDNEQ(*i.IDNEQ))
+		predicates = append(predicates, report.IDNEQ(*i.IDNEQ))
 	}
 	if len(i.IDIn) > 0 {
-		predicates = append(predicates, account.IDIn(i.IDIn...))
+		predicates = append(predicates, report.IDIn(i.IDIn...))
 	}
 	if len(i.IDNotIn) > 0 {
-		predicates = append(predicates, account.IDNotIn(i.IDNotIn...))
+		predicates = append(predicates, report.IDNotIn(i.IDNotIn...))
 	}
 	if i.IDGT != nil {
-		predicates = append(predicates, account.IDGT(*i.IDGT))
+		predicates = append(predicates, report.IDGT(*i.IDGT))
 	}
 	if i.IDGTE != nil {
-		predicates = append(predicates, account.IDGTE(*i.IDGTE))
+		predicates = append(predicates, report.IDGTE(*i.IDGTE))
 	}
 	if i.IDLT != nil {
-		predicates = append(predicates, account.IDLT(*i.IDLT))
+		predicates = append(predicates, report.IDLT(*i.IDLT))
 	}
 	if i.IDLTE != nil {
-		predicates = append(predicates, account.IDLTE(*i.IDLTE))
-	}
-	if i.Name != nil {
-		predicates = append(predicates, account.NameEQ(*i.Name))
-	}
-	if i.NameNEQ != nil {
-		predicates = append(predicates, account.NameNEQ(*i.NameNEQ))
-	}
-	if len(i.NameIn) > 0 {
-		predicates = append(predicates, account.NameIn(i.NameIn...))
-	}
-	if len(i.NameNotIn) > 0 {
-		predicates = append(predicates, account.NameNotIn(i.NameNotIn...))
-	}
-	if i.NameGT != nil {
-		predicates = append(predicates, account.NameGT(*i.NameGT))
-	}
-	if i.NameGTE != nil {
-		predicates = append(predicates, account.NameGTE(*i.NameGTE))
-	}
-	if i.NameLT != nil {
-		predicates = append(predicates, account.NameLT(*i.NameLT))
-	}
-	if i.NameLTE != nil {
-		predicates = append(predicates, account.NameLTE(*i.NameLTE))
-	}
-	if i.NameContains != nil {
-		predicates = append(predicates, account.NameContains(*i.NameContains))
-	}
-	if i.NameHasPrefix != nil {
-		predicates = append(predicates, account.NameHasPrefix(*i.NameHasPrefix))
-	}
-	if i.NameHasSuffix != nil {
-		predicates = append(predicates, account.NameHasSuffix(*i.NameHasSuffix))
-	}
-	if i.NameEqualFold != nil {
-		predicates = append(predicates, account.NameEqualFold(*i.NameEqualFold))
-	}
-	if i.NameContainsFold != nil {
-		predicates = append(predicates, account.NameContainsFold(*i.NameContainsFold))
-	}
-	if i.CreatedAt != nil {
-		predicates = append(predicates, account.CreatedAtEQ(*i.CreatedAt))
-	}
-	if i.CreatedAtNEQ != nil {
-		predicates = append(predicates, account.CreatedAtNEQ(*i.CreatedAtNEQ))
-	}
-	if len(i.CreatedAtIn) > 0 {
-		predicates = append(predicates, account.CreatedAtIn(i.CreatedAtIn...))
-	}
-	if len(i.CreatedAtNotIn) > 0 {
-		predicates = append(predicates, account.CreatedAtNotIn(i.CreatedAtNotIn...))
-	}
-	if i.CreatedAtGT != nil {
-		predicates = append(predicates, account.CreatedAtGT(*i.CreatedAtGT))
-	}
-	if i.CreatedAtGTE != nil {
-		predicates = append(predicates, account.CreatedAtGTE(*i.CreatedAtGTE))
-	}
-	if i.CreatedAtLT != nil {
-		predicates = append(predicates, account.CreatedAtLT(*i.CreatedAtLT))
-	}
-	if i.CreatedAtLTE != nil {
-		predicates = append(predicates, account.CreatedAtLTE(*i.CreatedAtLTE))
+		predicates = append(predicates, report.IDLTE(*i.IDLTE))
 	}
 
-	if i.HasTennants != nil {
-		p := account.HasTennants()
-		if !*i.HasTennants {
-			p = account.Not(p)
-		}
-		predicates = append(predicates, p)
-	}
-	if len(i.HasTennantsWith) > 0 {
-		with := make([]predicate.Tennant, 0, len(i.HasTennantsWith))
-		for _, w := range i.HasTennantsWith {
-			p, err := w.P()
-			if err != nil {
-				return nil, fmt.Errorf("%w: field 'HasTennantsWith'", err)
-			}
-			with = append(with, p)
-		}
-		predicates = append(predicates, account.HasTennantsWith(with...))
-	}
 	switch len(predicates) {
 	case 0:
-		return nil, ErrEmptyAccountWhereInput
+		return nil, ErrEmptyReportWhereInput
 	case 1:
 		return predicates[0], nil
 	default:
-		return account.And(predicates...), nil
+		return report.And(predicates...), nil
 	}
 }
 
-// TennantWhereInput represents a where input for filtering Tennant queries.
-type TennantWhereInput struct {
-	Predicates []predicate.Tennant  `json:"-"`
-	Not        *TennantWhereInput   `json:"not,omitempty"`
-	Or         []*TennantWhereInput `json:"or,omitempty"`
-	And        []*TennantWhereInput `json:"and,omitempty"`
+// UserWhereInput represents a where input for filtering User queries.
+type UserWhereInput struct {
+	Predicates []predicate.User  `json:"-"`
+	Not        *UserWhereInput   `json:"not,omitempty"`
+	Or         []*UserWhereInput `json:"or,omitempty"`
+	And        []*UserWhereInput `json:"and,omitempty"`
 
 	// "id" field predicates.
-	ID      *uuid.UUID  `json:"id,omitempty"`
-	IDNEQ   *uuid.UUID  `json:"idNEQ,omitempty"`
-	IDIn    []uuid.UUID `json:"idIn,omitempty"`
-	IDNotIn []uuid.UUID `json:"idNotIn,omitempty"`
-	IDGT    *uuid.UUID  `json:"idGT,omitempty"`
-	IDGTE   *uuid.UUID  `json:"idGTE,omitempty"`
-	IDLT    *uuid.UUID  `json:"idLT,omitempty"`
-	IDLTE   *uuid.UUID  `json:"idLTE,omitempty"`
-
-	// "externalId" field predicates.
-	ExternalId             *string  `json:"externalid,omitempty"`
-	ExternalIdNEQ          *string  `json:"externalidNEQ,omitempty"`
-	ExternalIdIn           []string `json:"externalidIn,omitempty"`
-	ExternalIdNotIn        []string `json:"externalidNotIn,omitempty"`
-	ExternalIdGT           *string  `json:"externalidGT,omitempty"`
-	ExternalIdGTE          *string  `json:"externalidGTE,omitempty"`
-	ExternalIdLT           *string  `json:"externalidLT,omitempty"`
-	ExternalIdLTE          *string  `json:"externalidLTE,omitempty"`
-	ExternalIdContains     *string  `json:"externalidContains,omitempty"`
-	ExternalIdHasPrefix    *string  `json:"externalidHasPrefix,omitempty"`
-	ExternalIdHasSuffix    *string  `json:"externalidHasSuffix,omitempty"`
-	ExternalIdEqualFold    *string  `json:"externalidEqualFold,omitempty"`
-	ExternalIdContainsFold *string  `json:"externalidContainsFold,omitempty"`
-
-	// "cloud" field predicates.
-	Cloud             *string  `json:"cloud,omitempty"`
-	CloudNEQ          *string  `json:"cloudNEQ,omitempty"`
-	CloudIn           []string `json:"cloudIn,omitempty"`
-	CloudNotIn        []string `json:"cloudNotIn,omitempty"`
-	CloudGT           *string  `json:"cloudGT,omitempty"`
-	CloudGTE          *string  `json:"cloudGTE,omitempty"`
-	CloudLT           *string  `json:"cloudLT,omitempty"`
-	CloudLTE          *string  `json:"cloudLTE,omitempty"`
-	CloudContains     *string  `json:"cloudContains,omitempty"`
-	CloudHasPrefix    *string  `json:"cloudHasPrefix,omitempty"`
-	CloudHasSuffix    *string  `json:"cloudHasSuffix,omitempty"`
-	CloudEqualFold    *string  `json:"cloudEqualFold,omitempty"`
-	CloudContainsFold *string  `json:"cloudContainsFold,omitempty"`
-
-	// "account_id" field predicates.
-	AccountID      *uuid.UUID  `json:"accountID,omitempty"`
-	AccountIDNEQ   *uuid.UUID  `json:"accountIDNEQ,omitempty"`
-	AccountIDIn    []uuid.UUID `json:"accountIDIn,omitempty"`
-	AccountIDNotIn []uuid.UUID `json:"accountIDNotIn,omitempty"`
-
-	// "created_at" field predicates.
-	CreatedAt      *time.Time  `json:"createdAt,omitempty"`
-	CreatedAtNEQ   *time.Time  `json:"createdAtNEQ,omitempty"`
-	CreatedAtIn    []time.Time `json:"createdAtIn,omitempty"`
-	CreatedAtNotIn []time.Time `json:"createdAtNotIn,omitempty"`
-	CreatedAtGT    *time.Time  `json:"createdAtGT,omitempty"`
-	CreatedAtGTE   *time.Time  `json:"createdAtGTE,omitempty"`
-	CreatedAtLT    *time.Time  `json:"createdAtLT,omitempty"`
-	CreatedAtLTE   *time.Time  `json:"createdAtLTE,omitempty"`
-
-	// "account" edge predicates.
-	HasAccount     *bool                `json:"hasAccount,omitempty"`
-	HasAccountWith []*AccountWhereInput `json:"hasAccountWith,omitempty"`
+	ID      *int  `json:"id,omitempty"`
+	IDNEQ   *int  `json:"idNEQ,omitempty"`
+	IDIn    []int `json:"idIn,omitempty"`
+	IDNotIn []int `json:"idNotIn,omitempty"`
+	IDGT    *int  `json:"idGT,omitempty"`
+	IDGTE   *int  `json:"idGTE,omitempty"`
+	IDLT    *int  `json:"idLT,omitempty"`
+	IDLTE   *int  `json:"idLTE,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
-func (i *TennantWhereInput) AddPredicates(predicates ...predicate.Tennant) {
+func (i *UserWhereInput) AddPredicates(predicates ...predicate.User) {
 	i.Predicates = append(i.Predicates, predicates...)
 }
 
-// Filter applies the TennantWhereInput filter on the TennantQuery builder.
-func (i *TennantWhereInput) Filter(q *TennantQuery) (*TennantQuery, error) {
+// Filter applies the UserWhereInput filter on the UserQuery builder.
+func (i *UserWhereInput) Filter(q *UserQuery) (*UserQuery, error) {
 	if i == nil {
 		return q, nil
 	}
 	p, err := i.P()
 	if err != nil {
-		if err == ErrEmptyTennantWhereInput {
+		if err == ErrEmptyUserWhereInput {
 			return q, nil
 		}
 		return nil, err
@@ -335,19 +173,19 @@ func (i *TennantWhereInput) Filter(q *TennantQuery) (*TennantQuery, error) {
 	return q.Where(p), nil
 }
 
-// ErrEmptyTennantWhereInput is returned in case the TennantWhereInput is empty.
-var ErrEmptyTennantWhereInput = errors.New("ent: empty predicate TennantWhereInput")
+// ErrEmptyUserWhereInput is returned in case the UserWhereInput is empty.
+var ErrEmptyUserWhereInput = errors.New("ent: empty predicate UserWhereInput")
 
-// P returns a predicate for filtering tennants.
+// P returns a predicate for filtering users.
 // An error is returned if the input is empty or invalid.
-func (i *TennantWhereInput) P() (predicate.Tennant, error) {
-	var predicates []predicate.Tennant
+func (i *UserWhereInput) P() (predicate.User, error) {
+	var predicates []predicate.User
 	if i.Not != nil {
 		p, err := i.Not.P()
 		if err != nil {
 			return nil, fmt.Errorf("%w: field 'not'", err)
 		}
-		predicates = append(predicates, tennant.Not(p))
+		predicates = append(predicates, user.Not(p))
 	}
 	switch n := len(i.Or); {
 	case n == 1:
@@ -357,7 +195,7 @@ func (i *TennantWhereInput) P() (predicate.Tennant, error) {
 		}
 		predicates = append(predicates, p)
 	case n > 1:
-		or := make([]predicate.Tennant, 0, n)
+		or := make([]predicate.User, 0, n)
 		for _, w := range i.Or {
 			p, err := w.P()
 			if err != nil {
@@ -365,7 +203,7 @@ func (i *TennantWhereInput) P() (predicate.Tennant, error) {
 			}
 			or = append(or, p)
 		}
-		predicates = append(predicates, tennant.Or(or...))
+		predicates = append(predicates, user.Or(or...))
 	}
 	switch n := len(i.And); {
 	case n == 1:
@@ -375,7 +213,7 @@ func (i *TennantWhereInput) P() (predicate.Tennant, error) {
 		}
 		predicates = append(predicates, p)
 	case n > 1:
-		and := make([]predicate.Tennant, 0, n)
+		and := make([]predicate.User, 0, n)
 		for _, w := range i.And {
 			p, err := w.P()
 			if err != nil {
@@ -383,172 +221,40 @@ func (i *TennantWhereInput) P() (predicate.Tennant, error) {
 			}
 			and = append(and, p)
 		}
-		predicates = append(predicates, tennant.And(and...))
+		predicates = append(predicates, user.And(and...))
 	}
 	predicates = append(predicates, i.Predicates...)
 	if i.ID != nil {
-		predicates = append(predicates, tennant.IDEQ(*i.ID))
+		predicates = append(predicates, user.IDEQ(*i.ID))
 	}
 	if i.IDNEQ != nil {
-		predicates = append(predicates, tennant.IDNEQ(*i.IDNEQ))
+		predicates = append(predicates, user.IDNEQ(*i.IDNEQ))
 	}
 	if len(i.IDIn) > 0 {
-		predicates = append(predicates, tennant.IDIn(i.IDIn...))
+		predicates = append(predicates, user.IDIn(i.IDIn...))
 	}
 	if len(i.IDNotIn) > 0 {
-		predicates = append(predicates, tennant.IDNotIn(i.IDNotIn...))
+		predicates = append(predicates, user.IDNotIn(i.IDNotIn...))
 	}
 	if i.IDGT != nil {
-		predicates = append(predicates, tennant.IDGT(*i.IDGT))
+		predicates = append(predicates, user.IDGT(*i.IDGT))
 	}
 	if i.IDGTE != nil {
-		predicates = append(predicates, tennant.IDGTE(*i.IDGTE))
+		predicates = append(predicates, user.IDGTE(*i.IDGTE))
 	}
 	if i.IDLT != nil {
-		predicates = append(predicates, tennant.IDLT(*i.IDLT))
+		predicates = append(predicates, user.IDLT(*i.IDLT))
 	}
 	if i.IDLTE != nil {
-		predicates = append(predicates, tennant.IDLTE(*i.IDLTE))
-	}
-	if i.ExternalId != nil {
-		predicates = append(predicates, tennant.ExternalIdEQ(*i.ExternalId))
-	}
-	if i.ExternalIdNEQ != nil {
-		predicates = append(predicates, tennant.ExternalIdNEQ(*i.ExternalIdNEQ))
-	}
-	if len(i.ExternalIdIn) > 0 {
-		predicates = append(predicates, tennant.ExternalIdIn(i.ExternalIdIn...))
-	}
-	if len(i.ExternalIdNotIn) > 0 {
-		predicates = append(predicates, tennant.ExternalIdNotIn(i.ExternalIdNotIn...))
-	}
-	if i.ExternalIdGT != nil {
-		predicates = append(predicates, tennant.ExternalIdGT(*i.ExternalIdGT))
-	}
-	if i.ExternalIdGTE != nil {
-		predicates = append(predicates, tennant.ExternalIdGTE(*i.ExternalIdGTE))
-	}
-	if i.ExternalIdLT != nil {
-		predicates = append(predicates, tennant.ExternalIdLT(*i.ExternalIdLT))
-	}
-	if i.ExternalIdLTE != nil {
-		predicates = append(predicates, tennant.ExternalIdLTE(*i.ExternalIdLTE))
-	}
-	if i.ExternalIdContains != nil {
-		predicates = append(predicates, tennant.ExternalIdContains(*i.ExternalIdContains))
-	}
-	if i.ExternalIdHasPrefix != nil {
-		predicates = append(predicates, tennant.ExternalIdHasPrefix(*i.ExternalIdHasPrefix))
-	}
-	if i.ExternalIdHasSuffix != nil {
-		predicates = append(predicates, tennant.ExternalIdHasSuffix(*i.ExternalIdHasSuffix))
-	}
-	if i.ExternalIdEqualFold != nil {
-		predicates = append(predicates, tennant.ExternalIdEqualFold(*i.ExternalIdEqualFold))
-	}
-	if i.ExternalIdContainsFold != nil {
-		predicates = append(predicates, tennant.ExternalIdContainsFold(*i.ExternalIdContainsFold))
-	}
-	if i.Cloud != nil {
-		predicates = append(predicates, tennant.CloudEQ(*i.Cloud))
-	}
-	if i.CloudNEQ != nil {
-		predicates = append(predicates, tennant.CloudNEQ(*i.CloudNEQ))
-	}
-	if len(i.CloudIn) > 0 {
-		predicates = append(predicates, tennant.CloudIn(i.CloudIn...))
-	}
-	if len(i.CloudNotIn) > 0 {
-		predicates = append(predicates, tennant.CloudNotIn(i.CloudNotIn...))
-	}
-	if i.CloudGT != nil {
-		predicates = append(predicates, tennant.CloudGT(*i.CloudGT))
-	}
-	if i.CloudGTE != nil {
-		predicates = append(predicates, tennant.CloudGTE(*i.CloudGTE))
-	}
-	if i.CloudLT != nil {
-		predicates = append(predicates, tennant.CloudLT(*i.CloudLT))
-	}
-	if i.CloudLTE != nil {
-		predicates = append(predicates, tennant.CloudLTE(*i.CloudLTE))
-	}
-	if i.CloudContains != nil {
-		predicates = append(predicates, tennant.CloudContains(*i.CloudContains))
-	}
-	if i.CloudHasPrefix != nil {
-		predicates = append(predicates, tennant.CloudHasPrefix(*i.CloudHasPrefix))
-	}
-	if i.CloudHasSuffix != nil {
-		predicates = append(predicates, tennant.CloudHasSuffix(*i.CloudHasSuffix))
-	}
-	if i.CloudEqualFold != nil {
-		predicates = append(predicates, tennant.CloudEqualFold(*i.CloudEqualFold))
-	}
-	if i.CloudContainsFold != nil {
-		predicates = append(predicates, tennant.CloudContainsFold(*i.CloudContainsFold))
-	}
-	if i.AccountID != nil {
-		predicates = append(predicates, tennant.AccountIDEQ(*i.AccountID))
-	}
-	if i.AccountIDNEQ != nil {
-		predicates = append(predicates, tennant.AccountIDNEQ(*i.AccountIDNEQ))
-	}
-	if len(i.AccountIDIn) > 0 {
-		predicates = append(predicates, tennant.AccountIDIn(i.AccountIDIn...))
-	}
-	if len(i.AccountIDNotIn) > 0 {
-		predicates = append(predicates, tennant.AccountIDNotIn(i.AccountIDNotIn...))
-	}
-	if i.CreatedAt != nil {
-		predicates = append(predicates, tennant.CreatedAtEQ(*i.CreatedAt))
-	}
-	if i.CreatedAtNEQ != nil {
-		predicates = append(predicates, tennant.CreatedAtNEQ(*i.CreatedAtNEQ))
-	}
-	if len(i.CreatedAtIn) > 0 {
-		predicates = append(predicates, tennant.CreatedAtIn(i.CreatedAtIn...))
-	}
-	if len(i.CreatedAtNotIn) > 0 {
-		predicates = append(predicates, tennant.CreatedAtNotIn(i.CreatedAtNotIn...))
-	}
-	if i.CreatedAtGT != nil {
-		predicates = append(predicates, tennant.CreatedAtGT(*i.CreatedAtGT))
-	}
-	if i.CreatedAtGTE != nil {
-		predicates = append(predicates, tennant.CreatedAtGTE(*i.CreatedAtGTE))
-	}
-	if i.CreatedAtLT != nil {
-		predicates = append(predicates, tennant.CreatedAtLT(*i.CreatedAtLT))
-	}
-	if i.CreatedAtLTE != nil {
-		predicates = append(predicates, tennant.CreatedAtLTE(*i.CreatedAtLTE))
+		predicates = append(predicates, user.IDLTE(*i.IDLTE))
 	}
 
-	if i.HasAccount != nil {
-		p := tennant.HasAccount()
-		if !*i.HasAccount {
-			p = tennant.Not(p)
-		}
-		predicates = append(predicates, p)
-	}
-	if len(i.HasAccountWith) > 0 {
-		with := make([]predicate.Account, 0, len(i.HasAccountWith))
-		for _, w := range i.HasAccountWith {
-			p, err := w.P()
-			if err != nil {
-				return nil, fmt.Errorf("%w: field 'HasAccountWith'", err)
-			}
-			with = append(with, p)
-		}
-		predicates = append(predicates, tennant.HasAccountWith(with...))
-	}
 	switch len(predicates) {
 	case 0:
-		return nil, ErrEmptyTennantWhereInput
+		return nil, ErrEmptyUserWhereInput
 	case 1:
 		return predicates[0], nil
 	default:
-		return tennant.And(predicates...), nil
+		return user.And(predicates...), nil
 	}
 }

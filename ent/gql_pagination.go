@@ -14,9 +14,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/errcode"
-	"github.com/site-tech/jaw-platform/ent/account"
-	"github.com/site-tech/jaw-platform/ent/tennant"
-	"github.com/google/uuid"
+	"github.com/site-tech/jaw-platform/ent/report"
+	"github.com/site-tech/jaw-platform/ent/user"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -146,8 +145,8 @@ type PageInfo struct {
 
 // Cursor of an edge type.
 type Cursor struct {
-	ID    uuid.UUID `msgpack:"i"`
-	Value Value     `msgpack:"v,omitempty"`
+	ID    int   `msgpack:"i"`
+	Value Value `msgpack:"v,omitempty"`
 }
 
 // MarshalGQL implements graphql.Marshaler interface.
@@ -243,20 +242,20 @@ func paginateLimit(first, last *int) int {
 	return limit
 }
 
-// AccountEdge is the edge representation of Account.
-type AccountEdge struct {
-	Node   *Account `json:"node"`
-	Cursor Cursor   `json:"cursor"`
+// ReportEdge is the edge representation of Report.
+type ReportEdge struct {
+	Node   *Report `json:"node"`
+	Cursor Cursor  `json:"cursor"`
 }
 
-// AccountConnection is the connection containing edges to Account.
-type AccountConnection struct {
-	Edges      []*AccountEdge `json:"edges"`
-	PageInfo   PageInfo       `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
+// ReportConnection is the connection containing edges to Report.
+type ReportConnection struct {
+	Edges      []*ReportEdge `json:"edges"`
+	PageInfo   PageInfo      `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
 }
 
-func (c *AccountConnection) build(nodes []*Account, pager *accountPager, after *Cursor, first *int, before *Cursor, last *int) {
+func (c *ReportConnection) build(nodes []*Report, pager *reportPager, after *Cursor, first *int, before *Cursor, last *int) {
 	c.PageInfo.HasNextPage = before != nil
 	c.PageInfo.HasPreviousPage = after != nil
 	if first != nil && *first+1 == len(nodes) {
@@ -266,21 +265,21 @@ func (c *AccountConnection) build(nodes []*Account, pager *accountPager, after *
 		c.PageInfo.HasPreviousPage = true
 		nodes = nodes[:len(nodes)-1]
 	}
-	var nodeAt func(int) *Account
+	var nodeAt func(int) *Report
 	if last != nil {
 		n := len(nodes) - 1
-		nodeAt = func(i int) *Account {
+		nodeAt = func(i int) *Report {
 			return nodes[n-i]
 		}
 	} else {
-		nodeAt = func(i int) *Account {
+		nodeAt = func(i int) *Report {
 			return nodes[i]
 		}
 	}
-	c.Edges = make([]*AccountEdge, len(nodes))
+	c.Edges = make([]*ReportEdge, len(nodes))
 	for i := range nodes {
 		node := nodeAt(i)
-		c.Edges[i] = &AccountEdge{
+		c.Edges[i] = &ReportEdge{
 			Node:   node,
 			Cursor: pager.toCursor(node),
 		}
@@ -294,123 +293,123 @@ func (c *AccountConnection) build(nodes []*Account, pager *accountPager, after *
 	}
 }
 
-// AccountPaginateOption enables pagination customization.
-type AccountPaginateOption func(*accountPager) error
+// ReportPaginateOption enables pagination customization.
+type ReportPaginateOption func(*reportPager) error
 
-// WithAccountOrder configures pagination ordering.
-func WithAccountOrder(order *AccountOrder) AccountPaginateOption {
+// WithReportOrder configures pagination ordering.
+func WithReportOrder(order *ReportOrder) ReportPaginateOption {
 	if order == nil {
-		order = DefaultAccountOrder
+		order = DefaultReportOrder
 	}
 	o := *order
-	return func(pager *accountPager) error {
+	return func(pager *reportPager) error {
 		if err := o.Direction.Validate(); err != nil {
 			return err
 		}
 		if o.Field == nil {
-			o.Field = DefaultAccountOrder.Field
+			o.Field = DefaultReportOrder.Field
 		}
 		pager.order = &o
 		return nil
 	}
 }
 
-// WithAccountFilter configures pagination filter.
-func WithAccountFilter(filter func(*AccountQuery) (*AccountQuery, error)) AccountPaginateOption {
-	return func(pager *accountPager) error {
+// WithReportFilter configures pagination filter.
+func WithReportFilter(filter func(*ReportQuery) (*ReportQuery, error)) ReportPaginateOption {
+	return func(pager *reportPager) error {
 		if filter == nil {
-			return errors.New("AccountQuery filter cannot be nil")
+			return errors.New("ReportQuery filter cannot be nil")
 		}
 		pager.filter = filter
 		return nil
 	}
 }
 
-type accountPager struct {
-	order  *AccountOrder
-	filter func(*AccountQuery) (*AccountQuery, error)
+type reportPager struct {
+	order  *ReportOrder
+	filter func(*ReportQuery) (*ReportQuery, error)
 }
 
-func newAccountPager(opts []AccountPaginateOption) (*accountPager, error) {
-	pager := &accountPager{}
+func newReportPager(opts []ReportPaginateOption) (*reportPager, error) {
+	pager := &reportPager{}
 	for _, opt := range opts {
 		if err := opt(pager); err != nil {
 			return nil, err
 		}
 	}
 	if pager.order == nil {
-		pager.order = DefaultAccountOrder
+		pager.order = DefaultReportOrder
 	}
 	return pager, nil
 }
 
-func (p *accountPager) applyFilter(query *AccountQuery) (*AccountQuery, error) {
+func (p *reportPager) applyFilter(query *ReportQuery) (*ReportQuery, error) {
 	if p.filter != nil {
 		return p.filter(query)
 	}
 	return query, nil
 }
 
-func (p *accountPager) toCursor(a *Account) Cursor {
-	return p.order.Field.toCursor(a)
+func (p *reportPager) toCursor(r *Report) Cursor {
+	return p.order.Field.toCursor(r)
 }
 
-func (p *accountPager) applyCursors(query *AccountQuery, after, before *Cursor) *AccountQuery {
+func (p *reportPager) applyCursors(query *ReportQuery, after, before *Cursor) *ReportQuery {
 	for _, predicate := range cursorsToPredicates(
 		p.order.Direction, after, before,
-		p.order.Field.field, DefaultAccountOrder.Field.field,
+		p.order.Field.field, DefaultReportOrder.Field.field,
 	) {
 		query = query.Where(predicate)
 	}
 	return query
 }
 
-func (p *accountPager) applyOrder(query *AccountQuery, reverse bool) *AccountQuery {
+func (p *reportPager) applyOrder(query *ReportQuery, reverse bool) *ReportQuery {
 	direction := p.order.Direction
 	if reverse {
 		direction = direction.reverse()
 	}
 	query = query.Order(direction.orderFunc(p.order.Field.field))
-	if p.order.Field != DefaultAccountOrder.Field {
-		query = query.Order(direction.orderFunc(DefaultAccountOrder.Field.field))
+	if p.order.Field != DefaultReportOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultReportOrder.Field.field))
 	}
 	return query
 }
 
-func (p *accountPager) orderExpr(reverse bool) sql.Querier {
+func (p *reportPager) orderExpr(reverse bool) sql.Querier {
 	direction := p.order.Direction
 	if reverse {
 		direction = direction.reverse()
 	}
 	return sql.ExprFunc(func(b *sql.Builder) {
 		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
-		if p.order.Field != DefaultAccountOrder.Field {
-			b.Comma().Ident(DefaultAccountOrder.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultReportOrder.Field {
+			b.Comma().Ident(DefaultReportOrder.Field.field).Pad().WriteString(string(direction))
 		}
 	})
 }
 
-// Paginate executes the query and returns a relay based cursor connection to Account.
-func (a *AccountQuery) Paginate(
+// Paginate executes the query and returns a relay based cursor connection to Report.
+func (r *ReportQuery) Paginate(
 	ctx context.Context, after *Cursor, first *int,
-	before *Cursor, last *int, opts ...AccountPaginateOption,
-) (*AccountConnection, error) {
+	before *Cursor, last *int, opts ...ReportPaginateOption,
+) (*ReportConnection, error) {
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
-	pager, err := newAccountPager(opts)
+	pager, err := newReportPager(opts)
 	if err != nil {
 		return nil, err
 	}
-	if a, err = pager.applyFilter(a); err != nil {
+	if r, err = pager.applyFilter(r); err != nil {
 		return nil, err
 	}
-	conn := &AccountConnection{Edges: []*AccountEdge{}}
+	conn := &ReportConnection{Edges: []*ReportEdge{}}
 	ignoredEdges := !hasCollectedField(ctx, edgesField)
 	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
 		hasPagination := after != nil || first != nil || before != nil || last != nil
 		if hasPagination || ignoredEdges {
-			if conn.TotalCount, err = a.Clone().Count(ctx); err != nil {
+			if conn.TotalCount, err = r.Clone().Count(ctx); err != nil {
 				return nil, err
 			}
 			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
@@ -421,18 +420,18 @@ func (a *AccountQuery) Paginate(
 		return conn, nil
 	}
 
-	a = pager.applyCursors(a, after, before)
-	a = pager.applyOrder(a, last != nil)
+	r = pager.applyCursors(r, after, before)
+	r = pager.applyOrder(r, last != nil)
 	if limit := paginateLimit(first, last); limit != 0 {
-		a.Limit(limit)
+		r.Limit(limit)
 	}
 	if field := collectedField(ctx, edgesField, nodeField); field != nil {
-		if err := a.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+		if err := r.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
 			return nil, err
 		}
 	}
 
-	nodes, err := a.All(ctx)
+	nodes, err := r.All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -440,54 +439,54 @@ func (a *AccountQuery) Paginate(
 	return conn, nil
 }
 
-// AccountOrderField defines the ordering field of Account.
-type AccountOrderField struct {
+// ReportOrderField defines the ordering field of Report.
+type ReportOrderField struct {
 	field    string
-	toCursor func(*Account) Cursor
+	toCursor func(*Report) Cursor
 }
 
-// AccountOrder defines the ordering of Account.
-type AccountOrder struct {
-	Direction OrderDirection     `json:"direction"`
-	Field     *AccountOrderField `json:"field"`
+// ReportOrder defines the ordering of Report.
+type ReportOrder struct {
+	Direction OrderDirection    `json:"direction"`
+	Field     *ReportOrderField `json:"field"`
 }
 
-// DefaultAccountOrder is the default ordering of Account.
-var DefaultAccountOrder = &AccountOrder{
+// DefaultReportOrder is the default ordering of Report.
+var DefaultReportOrder = &ReportOrder{
 	Direction: OrderDirectionAsc,
-	Field: &AccountOrderField{
-		field: account.FieldID,
-		toCursor: func(a *Account) Cursor {
-			return Cursor{ID: a.ID}
+	Field: &ReportOrderField{
+		field: report.FieldID,
+		toCursor: func(r *Report) Cursor {
+			return Cursor{ID: r.ID}
 		},
 	},
 }
 
-// ToEdge converts Account into AccountEdge.
-func (a *Account) ToEdge(order *AccountOrder) *AccountEdge {
+// ToEdge converts Report into ReportEdge.
+func (r *Report) ToEdge(order *ReportOrder) *ReportEdge {
 	if order == nil {
-		order = DefaultAccountOrder
+		order = DefaultReportOrder
 	}
-	return &AccountEdge{
-		Node:   a,
-		Cursor: order.Field.toCursor(a),
+	return &ReportEdge{
+		Node:   r,
+		Cursor: order.Field.toCursor(r),
 	}
 }
 
-// TennantEdge is the edge representation of Tennant.
-type TennantEdge struct {
-	Node   *Tennant `json:"node"`
-	Cursor Cursor   `json:"cursor"`
+// UserEdge is the edge representation of User.
+type UserEdge struct {
+	Node   *User  `json:"node"`
+	Cursor Cursor `json:"cursor"`
 }
 
-// TennantConnection is the connection containing edges to Tennant.
-type TennantConnection struct {
-	Edges      []*TennantEdge `json:"edges"`
-	PageInfo   PageInfo       `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
+// UserConnection is the connection containing edges to User.
+type UserConnection struct {
+	Edges      []*UserEdge `json:"edges"`
+	PageInfo   PageInfo    `json:"pageInfo"`
+	TotalCount int         `json:"totalCount"`
 }
 
-func (c *TennantConnection) build(nodes []*Tennant, pager *tennantPager, after *Cursor, first *int, before *Cursor, last *int) {
+func (c *UserConnection) build(nodes []*User, pager *userPager, after *Cursor, first *int, before *Cursor, last *int) {
 	c.PageInfo.HasNextPage = before != nil
 	c.PageInfo.HasPreviousPage = after != nil
 	if first != nil && *first+1 == len(nodes) {
@@ -497,21 +496,21 @@ func (c *TennantConnection) build(nodes []*Tennant, pager *tennantPager, after *
 		c.PageInfo.HasPreviousPage = true
 		nodes = nodes[:len(nodes)-1]
 	}
-	var nodeAt func(int) *Tennant
+	var nodeAt func(int) *User
 	if last != nil {
 		n := len(nodes) - 1
-		nodeAt = func(i int) *Tennant {
+		nodeAt = func(i int) *User {
 			return nodes[n-i]
 		}
 	} else {
-		nodeAt = func(i int) *Tennant {
+		nodeAt = func(i int) *User {
 			return nodes[i]
 		}
 	}
-	c.Edges = make([]*TennantEdge, len(nodes))
+	c.Edges = make([]*UserEdge, len(nodes))
 	for i := range nodes {
 		node := nodeAt(i)
-		c.Edges[i] = &TennantEdge{
+		c.Edges[i] = &UserEdge{
 			Node:   node,
 			Cursor: pager.toCursor(node),
 		}
@@ -525,123 +524,123 @@ func (c *TennantConnection) build(nodes []*Tennant, pager *tennantPager, after *
 	}
 }
 
-// TennantPaginateOption enables pagination customization.
-type TennantPaginateOption func(*tennantPager) error
+// UserPaginateOption enables pagination customization.
+type UserPaginateOption func(*userPager) error
 
-// WithTennantOrder configures pagination ordering.
-func WithTennantOrder(order *TennantOrder) TennantPaginateOption {
+// WithUserOrder configures pagination ordering.
+func WithUserOrder(order *UserOrder) UserPaginateOption {
 	if order == nil {
-		order = DefaultTennantOrder
+		order = DefaultUserOrder
 	}
 	o := *order
-	return func(pager *tennantPager) error {
+	return func(pager *userPager) error {
 		if err := o.Direction.Validate(); err != nil {
 			return err
 		}
 		if o.Field == nil {
-			o.Field = DefaultTennantOrder.Field
+			o.Field = DefaultUserOrder.Field
 		}
 		pager.order = &o
 		return nil
 	}
 }
 
-// WithTennantFilter configures pagination filter.
-func WithTennantFilter(filter func(*TennantQuery) (*TennantQuery, error)) TennantPaginateOption {
-	return func(pager *tennantPager) error {
+// WithUserFilter configures pagination filter.
+func WithUserFilter(filter func(*UserQuery) (*UserQuery, error)) UserPaginateOption {
+	return func(pager *userPager) error {
 		if filter == nil {
-			return errors.New("TennantQuery filter cannot be nil")
+			return errors.New("UserQuery filter cannot be nil")
 		}
 		pager.filter = filter
 		return nil
 	}
 }
 
-type tennantPager struct {
-	order  *TennantOrder
-	filter func(*TennantQuery) (*TennantQuery, error)
+type userPager struct {
+	order  *UserOrder
+	filter func(*UserQuery) (*UserQuery, error)
 }
 
-func newTennantPager(opts []TennantPaginateOption) (*tennantPager, error) {
-	pager := &tennantPager{}
+func newUserPager(opts []UserPaginateOption) (*userPager, error) {
+	pager := &userPager{}
 	for _, opt := range opts {
 		if err := opt(pager); err != nil {
 			return nil, err
 		}
 	}
 	if pager.order == nil {
-		pager.order = DefaultTennantOrder
+		pager.order = DefaultUserOrder
 	}
 	return pager, nil
 }
 
-func (p *tennantPager) applyFilter(query *TennantQuery) (*TennantQuery, error) {
+func (p *userPager) applyFilter(query *UserQuery) (*UserQuery, error) {
 	if p.filter != nil {
 		return p.filter(query)
 	}
 	return query, nil
 }
 
-func (p *tennantPager) toCursor(t *Tennant) Cursor {
-	return p.order.Field.toCursor(t)
+func (p *userPager) toCursor(u *User) Cursor {
+	return p.order.Field.toCursor(u)
 }
 
-func (p *tennantPager) applyCursors(query *TennantQuery, after, before *Cursor) *TennantQuery {
+func (p *userPager) applyCursors(query *UserQuery, after, before *Cursor) *UserQuery {
 	for _, predicate := range cursorsToPredicates(
 		p.order.Direction, after, before,
-		p.order.Field.field, DefaultTennantOrder.Field.field,
+		p.order.Field.field, DefaultUserOrder.Field.field,
 	) {
 		query = query.Where(predicate)
 	}
 	return query
 }
 
-func (p *tennantPager) applyOrder(query *TennantQuery, reverse bool) *TennantQuery {
+func (p *userPager) applyOrder(query *UserQuery, reverse bool) *UserQuery {
 	direction := p.order.Direction
 	if reverse {
 		direction = direction.reverse()
 	}
 	query = query.Order(direction.orderFunc(p.order.Field.field))
-	if p.order.Field != DefaultTennantOrder.Field {
-		query = query.Order(direction.orderFunc(DefaultTennantOrder.Field.field))
+	if p.order.Field != DefaultUserOrder.Field {
+		query = query.Order(direction.orderFunc(DefaultUserOrder.Field.field))
 	}
 	return query
 }
 
-func (p *tennantPager) orderExpr(reverse bool) sql.Querier {
+func (p *userPager) orderExpr(reverse bool) sql.Querier {
 	direction := p.order.Direction
 	if reverse {
 		direction = direction.reverse()
 	}
 	return sql.ExprFunc(func(b *sql.Builder) {
 		b.Ident(p.order.Field.field).Pad().WriteString(string(direction))
-		if p.order.Field != DefaultTennantOrder.Field {
-			b.Comma().Ident(DefaultTennantOrder.Field.field).Pad().WriteString(string(direction))
+		if p.order.Field != DefaultUserOrder.Field {
+			b.Comma().Ident(DefaultUserOrder.Field.field).Pad().WriteString(string(direction))
 		}
 	})
 }
 
-// Paginate executes the query and returns a relay based cursor connection to Tennant.
-func (t *TennantQuery) Paginate(
+// Paginate executes the query and returns a relay based cursor connection to User.
+func (u *UserQuery) Paginate(
 	ctx context.Context, after *Cursor, first *int,
-	before *Cursor, last *int, opts ...TennantPaginateOption,
-) (*TennantConnection, error) {
+	before *Cursor, last *int, opts ...UserPaginateOption,
+) (*UserConnection, error) {
 	if err := validateFirstLast(first, last); err != nil {
 		return nil, err
 	}
-	pager, err := newTennantPager(opts)
+	pager, err := newUserPager(opts)
 	if err != nil {
 		return nil, err
 	}
-	if t, err = pager.applyFilter(t); err != nil {
+	if u, err = pager.applyFilter(u); err != nil {
 		return nil, err
 	}
-	conn := &TennantConnection{Edges: []*TennantEdge{}}
+	conn := &UserConnection{Edges: []*UserEdge{}}
 	ignoredEdges := !hasCollectedField(ctx, edgesField)
 	if hasCollectedField(ctx, totalCountField) || hasCollectedField(ctx, pageInfoField) {
 		hasPagination := after != nil || first != nil || before != nil || last != nil
 		if hasPagination || ignoredEdges {
-			if conn.TotalCount, err = t.Clone().Count(ctx); err != nil {
+			if conn.TotalCount, err = u.Clone().Count(ctx); err != nil {
 				return nil, err
 			}
 			conn.PageInfo.HasNextPage = first != nil && conn.TotalCount > 0
@@ -652,18 +651,18 @@ func (t *TennantQuery) Paginate(
 		return conn, nil
 	}
 
-	t = pager.applyCursors(t, after, before)
-	t = pager.applyOrder(t, last != nil)
+	u = pager.applyCursors(u, after, before)
+	u = pager.applyOrder(u, last != nil)
 	if limit := paginateLimit(first, last); limit != 0 {
-		t.Limit(limit)
+		u.Limit(limit)
 	}
 	if field := collectedField(ctx, edgesField, nodeField); field != nil {
-		if err := t.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
+		if err := u.collectField(ctx, graphql.GetOperationContext(ctx), *field, []string{edgesField, nodeField}); err != nil {
 			return nil, err
 		}
 	}
 
-	nodes, err := t.All(ctx)
+	nodes, err := u.All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -671,36 +670,36 @@ func (t *TennantQuery) Paginate(
 	return conn, nil
 }
 
-// TennantOrderField defines the ordering field of Tennant.
-type TennantOrderField struct {
+// UserOrderField defines the ordering field of User.
+type UserOrderField struct {
 	field    string
-	toCursor func(*Tennant) Cursor
+	toCursor func(*User) Cursor
 }
 
-// TennantOrder defines the ordering of Tennant.
-type TennantOrder struct {
-	Direction OrderDirection     `json:"direction"`
-	Field     *TennantOrderField `json:"field"`
+// UserOrder defines the ordering of User.
+type UserOrder struct {
+	Direction OrderDirection  `json:"direction"`
+	Field     *UserOrderField `json:"field"`
 }
 
-// DefaultTennantOrder is the default ordering of Tennant.
-var DefaultTennantOrder = &TennantOrder{
+// DefaultUserOrder is the default ordering of User.
+var DefaultUserOrder = &UserOrder{
 	Direction: OrderDirectionAsc,
-	Field: &TennantOrderField{
-		field: tennant.FieldID,
-		toCursor: func(t *Tennant) Cursor {
-			return Cursor{ID: t.ID}
+	Field: &UserOrderField{
+		field: user.FieldID,
+		toCursor: func(u *User) Cursor {
+			return Cursor{ID: u.ID}
 		},
 	},
 }
 
-// ToEdge converts Tennant into TennantEdge.
-func (t *Tennant) ToEdge(order *TennantOrder) *TennantEdge {
+// ToEdge converts User into UserEdge.
+func (u *User) ToEdge(order *UserOrder) *UserEdge {
 	if order == nil {
-		order = DefaultTennantOrder
+		order = DefaultUserOrder
 	}
-	return &TennantEdge{
-		Node:   t,
-		Cursor: order.Field.toCursor(t),
+	return &UserEdge{
+		Node:   u,
+		Cursor: order.Field.toCursor(u),
 	}
 }
