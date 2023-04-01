@@ -15,6 +15,18 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
 
+  jaw-redis:
+    image: redis:6.2-alpine
+    network_mode: bridge
+    container_name: jaw-redis
+    volumes:
+      - jaw-data:/var/lib/redis/data
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+    command: redis-server --save 20 1 --loglevel warning --requirepass redisadmin
+
   jaw-platform:
     image: jaw-platform:latest
     network_mode: bridge
@@ -28,8 +40,10 @@ services:
       - 8880:8880
     depends_on:
       - jaw-postgres
+      - jaw-redis
     links:
       - jaw-postgres
+      - jaw-redis
 
 volumes:
   jaw-data:
