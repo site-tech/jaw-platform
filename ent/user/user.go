@@ -7,6 +7,8 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldFullName holds the string denoting the fullname field in the database.
+	FieldFullName = "full_name"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 )
@@ -14,6 +16,7 @@ const (
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
+	FieldFullName,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -25,3 +28,8 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// FullNameValidator is a validator for the "fullName" field. It is called by the builders before save.
+	FullNameValidator func(string) error
+)

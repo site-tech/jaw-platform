@@ -78,6 +78,112 @@ func IDLTE(id int) predicate.User {
 	})
 }
 
+// FullName applies equality check predicate on the "fullName" field. It's identical to FullNameEQ.
+func FullName(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameEQ applies the EQ predicate on the "fullName" field.
+func FullNameEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameNEQ applies the NEQ predicate on the "fullName" field.
+func FullNameNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameIn applies the In predicate on the "fullName" field.
+func FullNameIn(vs ...string) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.In(s.C(FieldFullName), v...))
+	})
+}
+
+// FullNameNotIn applies the NotIn predicate on the "fullName" field.
+func FullNameNotIn(vs ...string) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotIn(s.C(FieldFullName), v...))
+	})
+}
+
+// FullNameGT applies the GT predicate on the "fullName" field.
+func FullNameGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameGTE applies the GTE predicate on the "fullName" field.
+func FullNameGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameLT applies the LT predicate on the "fullName" field.
+func FullNameLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameLTE applies the LTE predicate on the "fullName" field.
+func FullNameLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameContains applies the Contains predicate on the "fullName" field.
+func FullNameContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameHasPrefix applies the HasPrefix predicate on the "fullName" field.
+func FullNameHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameHasSuffix applies the HasSuffix predicate on the "fullName" field.
+func FullNameHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameEqualFold applies the EqualFold predicate on the "fullName" field.
+func FullNameEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldFullName), v))
+	})
+}
+
+// FullNameContainsFold applies the ContainsFold predicate on the "fullName" field.
+func FullNameContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldFullName), v))
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(func(s *sql.Selector) {

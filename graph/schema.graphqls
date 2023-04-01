@@ -3,3 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 scalar Time
+
+extend type Query {
+	jaw: User!
+}

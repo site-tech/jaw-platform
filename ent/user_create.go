@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -16,6 +17,12 @@ type UserCreate struct {
 	config
 	mutation *UserMutation
 	hooks    []Hook
+}
+
+// SetFullName sets the "fullName" field.
+func (uc *UserCreate) SetFullName(s string) *UserCreate {
+	uc.mutation.SetFullName(s)
+	return uc
 }
 
 // SetID sets the "id" field.
@@ -100,6 +107,14 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (uc *UserCreate) check() error {
+	if _, ok := uc.mutation.FullName(); !ok {
+		return &ValidationError{Name: "fullName", err: errors.New(`ent: missing required field "User.fullName"`)}
+	}
+	if v, ok := uc.mutation.FullName(); ok {
+		if err := user.FullNameValidator(v); err != nil {
+			return &ValidationError{Name: "fullName", err: fmt.Errorf(`ent: validator failed for field "User.fullName": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -132,6 +147,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if id, ok := uc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := uc.mutation.FullName(); ok {
+		_spec.SetField(user.FieldFullName, field.TypeString, value)
+		_node.FullName = value
 	}
 	return _node, _spec
 }

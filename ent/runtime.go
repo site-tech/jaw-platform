@@ -2,8 +2,19 @@
 
 package ent
 
+import (
+	"github.com/site-tech/jaw-platform/ent/schema"
+	"github.com/site-tech/jaw-platform/ent/user"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	userFields := schema.User{}.Fields()
+	_ = userFields
+	// userDescFullName is the schema descriptor for fullName field.
+	userDescFullName := userFields[1].Descriptor()
+	// user.FullNameValidator is a validator for the "fullName" field. It is called by the builders before save.
+	user.FullNameValidator = userDescFullName.Validators[0].(func(string) error)
 }

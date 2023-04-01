@@ -151,6 +151,21 @@ type UserWhereInput struct {
 	IDGTE   *int  `json:"idGTE,omitempty"`
 	IDLT    *int  `json:"idLT,omitempty"`
 	IDLTE   *int  `json:"idLTE,omitempty"`
+
+	// "fullName" field predicates.
+	FullName             *string  `json:"fullname,omitempty"`
+	FullNameNEQ          *string  `json:"fullnameNEQ,omitempty"`
+	FullNameIn           []string `json:"fullnameIn,omitempty"`
+	FullNameNotIn        []string `json:"fullnameNotIn,omitempty"`
+	FullNameGT           *string  `json:"fullnameGT,omitempty"`
+	FullNameGTE          *string  `json:"fullnameGTE,omitempty"`
+	FullNameLT           *string  `json:"fullnameLT,omitempty"`
+	FullNameLTE          *string  `json:"fullnameLTE,omitempty"`
+	FullNameContains     *string  `json:"fullnameContains,omitempty"`
+	FullNameHasPrefix    *string  `json:"fullnameHasPrefix,omitempty"`
+	FullNameHasSuffix    *string  `json:"fullnameHasSuffix,omitempty"`
+	FullNameEqualFold    *string  `json:"fullnameEqualFold,omitempty"`
+	FullNameContainsFold *string  `json:"fullnameContainsFold,omitempty"`
 }
 
 // AddPredicates adds custom predicates to the where input to be used during the filtering phase.
@@ -247,6 +262,45 @@ func (i *UserWhereInput) P() (predicate.User, error) {
 	}
 	if i.IDLTE != nil {
 		predicates = append(predicates, user.IDLTE(*i.IDLTE))
+	}
+	if i.FullName != nil {
+		predicates = append(predicates, user.FullNameEQ(*i.FullName))
+	}
+	if i.FullNameNEQ != nil {
+		predicates = append(predicates, user.FullNameNEQ(*i.FullNameNEQ))
+	}
+	if len(i.FullNameIn) > 0 {
+		predicates = append(predicates, user.FullNameIn(i.FullNameIn...))
+	}
+	if len(i.FullNameNotIn) > 0 {
+		predicates = append(predicates, user.FullNameNotIn(i.FullNameNotIn...))
+	}
+	if i.FullNameGT != nil {
+		predicates = append(predicates, user.FullNameGT(*i.FullNameGT))
+	}
+	if i.FullNameGTE != nil {
+		predicates = append(predicates, user.FullNameGTE(*i.FullNameGTE))
+	}
+	if i.FullNameLT != nil {
+		predicates = append(predicates, user.FullNameLT(*i.FullNameLT))
+	}
+	if i.FullNameLTE != nil {
+		predicates = append(predicates, user.FullNameLTE(*i.FullNameLTE))
+	}
+	if i.FullNameContains != nil {
+		predicates = append(predicates, user.FullNameContains(*i.FullNameContains))
+	}
+	if i.FullNameHasPrefix != nil {
+		predicates = append(predicates, user.FullNameHasPrefix(*i.FullNameHasPrefix))
+	}
+	if i.FullNameHasSuffix != nil {
+		predicates = append(predicates, user.FullNameHasSuffix(*i.FullNameHasSuffix))
+	}
+	if i.FullNameEqualFold != nil {
+		predicates = append(predicates, user.FullNameEqualFold(*i.FullNameEqualFold))
+	}
+	if i.FullNameContainsFold != nil {
+		predicates = append(predicates, user.FullNameContainsFold(*i.FullNameContainsFold))
 	}
 
 	switch len(predicates) {

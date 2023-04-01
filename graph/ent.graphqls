@@ -69,6 +69,7 @@ input ReportWhereInput {
 }
 type User implements Node {
   id: ID!
+  fullname: String! @goField(name: "FullName", forceResolver: false)
 }
 """
 UserWhereInput is used for filtering User objects.
@@ -87,4 +88,18 @@ input UserWhereInput {
   idGTE: ID
   idLT: ID
   idLTE: ID
+  """fullName field predicates"""
+  fullname: String
+  fullnameNEQ: String
+  fullnameIn: [String!]
+  fullnameNotIn: [String!]
+  fullnameGT: String
+  fullnameGTE: String
+  fullnameLT: String
+  fullnameLTE: String
+  fullnameContains: String
+  fullnameHasPrefix: String
+  fullnameHasSuffix: String
+  fullnameEqualFold: String
+  fullnameContainsFold: String
 }
