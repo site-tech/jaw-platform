@@ -12,7 +12,6 @@ import (
 	"github.com/site-tech/jaw-platform/cmd"
 	"github.com/site-tech/jaw-platform/ent"
 	"github.com/site-tech/jaw-platform/graph/model"
-	"github.com/site-tech/jaw-platform/pkg"
 )
 
 // Jaw is the resolver for the jaw field.
@@ -57,13 +56,35 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 		res.Columns = append(res.Columns, &model.Column{Name: columnName, Type: dataType})
 	}
 
-	pkg.InsertDBContext(ctx, clientDB)
+	ctx = context.WithValue(context.Background(), "dbClient", clientDB)
 
 	return &res, nil
 }
 
 // BuildReport is the resolver for the buildReport field.
-func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportClause) (int, error) {
+func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportClause) (string, error) {
 	log.Println("clause: ", clause.Selections)
-	return 200, nil
+	clientDB, ok := ctx.Value("dbClient").(*sql.DB)
+	if !ok {
+		return "500", fmt.Errorf("couldn't get db out of context")
+	}
+	sql := "SELECT * FROM routes_flat WHERE "
+	var inputs []string
+	for i, v := range clause.Selections {
+		sql = fmt.Sprintf("%s%s", sql, v.Field)
+		switch v.Operator {
+		case "equals":
+			sql = fmt.Sprintf("%s %s", sql, "=")
+		default:
+			log.Println("default case")
+		}
+		sql = fmt.Sprintf("%s %s%d", sql, "$", i)
+		inputs = append(inputs, v.Value)
+	}
+
+	log.Println("sql query: ", sql)
+	log.Println("inputs: ", inputs)
+
+	clientDB.Query(sql, inputs)
+	return "200", nil
 }
