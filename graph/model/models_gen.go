@@ -10,3 +10,13 @@ type DBConnection struct {
 	Port     int    `json:"port"`
 	Sslmode  string `json:"sslmode"`
 }
+
+type FlatTable struct {
+	Name    string    `json:"name"`
+	Columns []*Column `json:"columns"`
+}
+
+type Column struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}

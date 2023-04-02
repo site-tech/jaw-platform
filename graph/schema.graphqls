@@ -13,7 +13,17 @@ input DBConnection {
 	sslmode: String!
 }
 
+type column {
+	name: String!
+	type: String!
+}
+
+type FlatTable {
+	name: String!
+	columns: [column!]!
+}
+
 extend type Query {
 	jaw: User!
-	dbConnection(cred: DBConnection): Int!
+	dbConnection(cred: DBConnection): FlatTable!
 }

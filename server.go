@@ -52,7 +52,7 @@ func main() {
 		AllowedOrigins:     []string{"*"},
 		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowCredentials:   true,
-		Debug:              true,
+		Debug:              false,
 		OptionsPassthrough: true,
 	}).Handler)
 
