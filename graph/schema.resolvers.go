@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/site-tech/jaw-platform/ent"
 	"github.com/site-tech/jaw-platform/graph/model"
 )
+
+var ClientDB *sql.DB
 
 // Jaw is the resolver for the jaw field.
 func (r *queryResolver) Jaw(ctx context.Context) (*ent.User, error) {
@@ -25,15 +28,16 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 	dbDSN := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=%v",
 		cred.User, cred.Password, cred.Host, cred.Port, cred.Dbname, cred.Sslmode)
 
-	clientDB, err := sql.Open("postgres", dbDSN)
+	db, err := sql.Open("postgres", dbDSN)
 	if err != nil {
 		log.Println("opening database: ", err)
 		return nil, err
 	}
+	ClientDB = db
 
 	// Execute the query to get the columns information
 	log.Println("performing query...")
-	rows, err := clientDB.Query(`
+	rows, err := ClientDB.Query(`
 		SELECT column_name, data_type
 		FROM information_schema.columns
 		WHERE table_name = 'routes_flat';
@@ -42,7 +46,6 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 		log.Println(err)
 	}
 	defer rows.Close()
-	defer clientDB.Close()
 
 	// Fetch the results
 	var columnName, dataType string
@@ -56,7 +59,7 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 		res.Columns = append(res.Columns, &model.Column{Name: columnName, Type: dataType})
 	}
 
-	ctx = context.WithValue(context.Background(), "dbClient", clientDB)
+	//ctx = context.WithValue(context.Background(), "dbClient", ClientDB)
 
 	return &res, nil
 }
@@ -64,27 +67,78 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 // BuildReport is the resolver for the buildReport field.
 func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportClause) (string, error) {
 	log.Println("clause: ", clause.Selections)
-	clientDB, ok := ctx.Value("dbClient").(*sql.DB)
-	if !ok {
-		return "500", fmt.Errorf("couldn't get db out of context")
-	}
-	sql := "SELECT * FROM routes_flat WHERE "
-	var inputs []string
+	//clientDB, ok := ctx.Value("dbClient").(*sql.DB)
+	//if !ok {
+	//return "500", fmt.Errorf("couldn't get db out of context")
+	//}
+	sql := "SELECT * FROM routes_flat WHERE"
+	var inputs []interface{}
 	for i, v := range clause.Selections {
-		sql = fmt.Sprintf("%s%s", sql, v.Field)
+		if i > 0 {
+			sql = fmt.Sprintf("%s AND", sql)
+		}
+		sql = fmt.Sprintf("%s %s", sql, v.Field)
 		switch v.Operator {
 		case "equals":
 			sql = fmt.Sprintf("%s %s", sql, "=")
+		case "greater":
+			sql = fmt.Sprintf("%s %s", sql, ">")
+		case "less":
+			sql = fmt.Sprintf("%s %s", sql, "<")
 		default:
 			log.Println("default case")
 		}
-		sql = fmt.Sprintf("%s %s%d", sql, "$", i)
+		sql = fmt.Sprintf("%s %s%d", sql, "$", i+1)
 		inputs = append(inputs, v.Value)
 	}
 
 	log.Println("sql query: ", sql)
 	log.Println("inputs: ", inputs)
 
-	clientDB.Query(sql, inputs)
-	return "200", nil
+	rows, err := ClientDB.Query(sql, inputs...)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	var result []map[string]interface{}
+
+	cols, _ := rows.Columns()
+	colNum := len(cols)
+
+	for rows.Next() {
+		columns := make([]interface{}, colNum)
+		columnPtrs := make([]interface{}, colNum)
+
+		for i := 0; i < colNum; i++ {
+			columnPtrs[i] = &columns[i]
+		}
+
+		err = rows.Scan(columnPtrs...)
+		if err != nil {
+			return "500", err
+		}
+
+		rowData := make(map[string]interface{})
+		for i, colName := range cols {
+			var v interface{}
+			val := columns[i]
+			b, ok := val.([]byte)
+			if ok {
+				v = string(b)
+			} else {
+				v = val
+			}
+			rowData[colName] = v
+		}
+
+		result = append(result, rowData)
+	}
+
+	jsonResult, err := json.Marshal(result)
+	if err != nil {
+		return "500", err
+	}
+
+	return string(jsonResult), nil
 }
