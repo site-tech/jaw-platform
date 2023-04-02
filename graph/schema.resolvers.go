@@ -40,7 +40,7 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 		WHERE table_name = 'routes_flat';
 	`)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer rows.Close()
 	defer clientDB.Close()
@@ -52,7 +52,7 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 	for rows.Next() {
 		err := rows.Scan(&columnName, &dataType)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 		res.Columns = append(res.Columns, &model.Column{Name: columnName, Type: dataType})
 	}
