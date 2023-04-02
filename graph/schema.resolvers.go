@@ -79,7 +79,7 @@ func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportCla
 		}
 		sql = fmt.Sprintf("%s %s", sql, v.Field)
 		switch v.Operator {
-		case "equals":
+		case "equal":
 			sql = fmt.Sprintf("%s %s", sql, "=")
 		case "greater":
 			sql = fmt.Sprintf("%s %s", sql, ">")
