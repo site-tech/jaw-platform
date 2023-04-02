@@ -16,7 +16,18 @@ type FlatTable struct {
 	Columns []*Column `json:"columns"`
 }
 
+type ReportClause struct {
+	Selections []*ReportSelection `json:"selections"`
+}
+
 type Column struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
+}
+
+type ReportSelection struct {
+	ID       string `json:"_id"`
+	Field    string `json:"field"`
+	Operator string `json:"operator"`
+	Value    string `json:"value"`
 }

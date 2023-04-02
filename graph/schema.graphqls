@@ -23,7 +23,19 @@ type FlatTable {
 	columns: [column!]!
 }
 
+input reportSelection {
+	_id: String!
+	field: String!
+	operator: String!
+	value: String!
+}
+
+input ReportClause {
+	selections: [reportSelection!]!
+}
+
 extend type Query {
 	jaw: User!
 	dbConnection(cred: DBConnection): FlatTable!
+	buildReport(clause: ReportClause): Int!
 }

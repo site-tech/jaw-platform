@@ -58,6 +58,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		BuildReport        func(childComplexity int, clause *model.ReportClause) int
 		DbConnection       func(childComplexity int, cred *model.DBConnection) int
 		Jaw                func(childComplexity int) int
 		Node               func(childComplexity int, id string) int
@@ -89,6 +90,7 @@ type QueryResolver interface {
 	Nodes(ctx context.Context, ids []string) ([]ent.Noder, error)
 	Jaw(ctx context.Context) (*ent.User, error)
 	DbConnection(ctx context.Context, cred *model.DBConnection) (*model.FlatTable, error)
+	BuildReport(ctx context.Context, clause *model.ReportClause) (int, error)
 }
 
 type executableSchema struct {
@@ -147,6 +149,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "Query.buildReport":
+		if e.complexity.Query.BuildReport == nil {
+			break
+		}
+
+		args, err := ec.field_Query_buildReport_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.BuildReport(childComplexity, args["clause"].(*model.ReportClause)), true
 
 	case "Query.dbConnection":
 		if e.complexity.Query.DbConnection == nil {
@@ -249,8 +263,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputDBConnection,
+		ec.unmarshalInputReportClause,
 		ec.unmarshalInputReportWhereInput,
 		ec.unmarshalInputUserWhereInput,
+		ec.unmarshalInputreportSelection,
 	)
 	first := true
 
@@ -427,9 +443,21 @@ type FlatTable {
 	columns: [column!]!
 }
 
+input reportSelection {
+	_id: String!
+	field: String!
+	operator: String!
+	value: String!
+}
+
+input ReportClause {
+	selections: [reportSelection!]!
+}
+
 extend type Query {
 	jaw: User!
 	dbConnection(cred: DBConnection): FlatTable!
+	buildReport(clause: ReportClause): Int!
 }
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
@@ -476,6 +504,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_buildReport_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.ReportClause
+	if tmp, ok := rawArgs["clause"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clause"))
+		arg0, err = ec.unmarshalOReportClause2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportClause(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clause"] = arg0
 	return args, nil
 }
 
@@ -1038,6 +1081,61 @@ func (ec *executionContext) fieldContext_Query_dbConnection(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_dbConnection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_buildReport(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_buildReport(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().BuildReport(rctx, fc.Args["clause"].(*model.ReportClause))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_buildReport(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_buildReport_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -3323,6 +3421,34 @@ func (ec *executionContext) unmarshalInputDBConnection(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputReportClause(ctx context.Context, obj interface{}) (model.ReportClause, error) {
+	var it model.ReportClause
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"selections"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "selections":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("selections"))
+			it.Selections, err = ec.unmarshalNreportSelection2ᚕᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportSelectionᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputReportWhereInput(ctx context.Context, obj interface{}) (ent.ReportWhereInput, error) {
 	var it ent.ReportWhereInput
 	asMap := map[string]interface{}{}
@@ -3643,6 +3769,58 @@ func (ec *executionContext) unmarshalInputUserWhereInput(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputreportSelection(ctx context.Context, obj interface{}) (model.ReportSelection, error) {
+	var it model.ReportSelection
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"_id", "field", "operator", "value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_id"))
+			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "field":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			it.Field, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "operator":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operator"))
+			it.Operator, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "value":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			it.Value, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3843,6 +4021,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_dbConnection(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "buildReport":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_buildReport(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4852,6 +5053,28 @@ func (ec *executionContext) marshalNcolumn2ᚖgithubᚗcomᚋsiteᚑtechᚋjaw�
 	return ec._column(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNreportSelection2ᚕᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportSelectionᚄ(ctx context.Context, v interface{}) ([]*model.ReportSelection, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.ReportSelection, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNreportSelection2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportSelection(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNreportSelection2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportSelection(ctx context.Context, v interface{}) (*model.ReportSelection, error) {
+	res, err := ec.unmarshalInputreportSelection(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4961,6 +5184,14 @@ func (ec *executionContext) marshalONode2githubᚗcomᚋsiteᚑtechᚋjawᚑplat
 		return graphql.Null
 	}
 	return ec._Node(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOReportClause2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportClause(ctx context.Context, v interface{}) (*model.ReportClause, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputReportClause(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOReportWhereInput2ᚕᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋentᚐReportWhereInputᚄ(ctx context.Context, v interface{}) ([]*ent.ReportWhereInput, error) {

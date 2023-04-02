@@ -61,3 +61,9 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 
 	return &res, nil
 }
+
+// BuildReport is the resolver for the buildReport field.
+func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportClause) (int, error) {
+	log.Println("clause: ", clause.Selections)
+	return 200, nil
+}
