@@ -70,6 +70,10 @@ type ComplexityRoot struct {
 		ID func(childComplexity int) int
 	}
 
+	ReportData struct {
+		Rows func(childComplexity int) int
+	}
+
 	User struct {
 		FullName func(childComplexity int) int
 		ID       func(childComplexity int) int
@@ -90,7 +94,7 @@ type QueryResolver interface {
 	Nodes(ctx context.Context, ids []string) ([]ent.Noder, error)
 	Jaw(ctx context.Context) (*ent.User, error)
 	DbConnection(ctx context.Context, cred *model.DBConnection) (*model.FlatTable, error)
-	BuildReport(ctx context.Context, clause *model.ReportClause) (string, error)
+	BuildReport(ctx context.Context, clause *model.ReportClause) (*model.ReportData, error)
 }
 
 type executableSchema struct {
@@ -218,6 +222,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Report.ID(childComplexity), true
+
+	case "ReportData.rows":
+		if e.complexity.ReportData.Rows == nil {
+			break
+		}
+
+		return e.complexity.ReportData.Rows(childComplexity), true
 
 	case "User.fullname":
 		if e.complexity.User.FullName == nil {
@@ -423,7 +434,7 @@ input UserWhereInput {
 # https://gqlgen.com/getting-started/
 
 scalar Time
-scalar JSONObject
+scalar Map
 
 input DBConnection {
 	host: String!
@@ -455,10 +466,14 @@ input ReportClause {
 	selections: [reportSelection!]!
 }
 
+type ReportData {
+	rows: [Map!]!
+}
+
 extend type Query {
 	jaw: User!
 	dbConnection(cred: DBConnection): FlatTable!
-	buildReport(clause: ReportClause): JSONObject!
+	buildReport(clause: ReportClause): ReportData!
 }
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
@@ -1114,9 +1129,9 @@ func (ec *executionContext) _Query_buildReport(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.ReportData)
 	fc.Result = res
-	return ec.marshalNJSONObject2string(ctx, field.Selections, res)
+	return ec.marshalNReportData2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportData(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_buildReport(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1126,7 +1141,11 @@ func (ec *executionContext) fieldContext_Query_buildReport(ctx context.Context, 
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type JSONObject does not have child fields")
+			switch field.Name {
+			case "rows":
+				return ec.fieldContext_ReportData_rows(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ReportData", field.Name)
 		},
 	}
 	defer func() {
@@ -1359,6 +1378,50 @@ func (ec *executionContext) fieldContext_Report_id(ctx context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReportData_rows(ctx context.Context, field graphql.CollectedField, obj *model.ReportData) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ReportData_rows(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rows, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]map[string]interface{})
+	fc.Result = res
+	return ec.marshalNMap2ᚕmapᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ReportData_rows(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReportData",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4132,6 +4195,34 @@ func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
+var reportDataImplementors = []string{"ReportData"}
+
+func (ec *executionContext) _ReportData(ctx context.Context, sel ast.SelectionSet, obj *model.ReportData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reportDataImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReportData")
+		case "rows":
+
+			out.Values[i] = ec._ReportData_rows(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var userImplementors = []string{"User", "Node"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *ent.User) graphql.Marshaler {
@@ -4651,19 +4742,57 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNJSONObject2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
+func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
+	res, err := graphql.UnmarshalMap(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNJSONObject2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
+func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNMap2ᚕmapᚄ(ctx context.Context, v interface{}) ([]map[string]interface{}, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]map[string]interface{}, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNMap2map(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNMap2ᚕmapᚄ(ctx context.Context, sel ast.SelectionSet, v []map[string]interface{}) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNMap2map(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNNode2ᚕgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋentᚐNoder(ctx context.Context, sel ast.SelectionSet, v []ent.Noder) graphql.Marshaler {
@@ -4702,6 +4831,20 @@ func (ec *executionContext) marshalNNode2ᚕgithubᚗcomᚋsiteᚑtechᚋjawᚑp
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) marshalNReportData2githubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportData(ctx context.Context, sel ast.SelectionSet, v model.ReportData) graphql.Marshaler {
+	return ec._ReportData(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNReportData2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋgraphᚋmodelᚐReportData(ctx context.Context, sel ast.SelectionSet, v *model.ReportData) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ReportData(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNReportWhereInput2ᚖgithubᚗcomᚋsiteᚑtechᚋjawᚑplatformᚋentᚐReportWhereInput(ctx context.Context, v interface{}) (*ent.ReportWhereInput, error) {

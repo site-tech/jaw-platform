@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -65,7 +64,7 @@ func (r *queryResolver) DbConnection(ctx context.Context, cred *model.DBConnecti
 }
 
 // BuildReport is the resolver for the buildReport field.
-func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportClause) (string, error) {
+func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportClause) (*model.ReportData, error) {
 	log.Println("clause: ", clause.Selections)
 	//clientDB, ok := ctx.Value("dbClient").(*sql.DB)
 	//if !ok {
@@ -97,7 +96,7 @@ func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportCla
 
 	rows, err := ClientDB.Query(sql, inputs...)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -116,7 +115,7 @@ func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportCla
 
 		err = rows.Scan(columnPtrs...)
 		if err != nil {
-			return "500", err
+			return nil, err
 		}
 
 		rowData := make(map[string]interface{})
@@ -135,10 +134,8 @@ func (r *queryResolver) BuildReport(ctx context.Context, clause *model.ReportCla
 		result = append(result, rowData)
 	}
 
-	jsonResult, err := json.Marshal(result)
-	if err != nil {
-		return "500", err
-	}
+	finalData := model.ReportData{}
+	finalData.Rows = result
 
-	return string(jsonResult), nil
+	return &finalData, nil
 }

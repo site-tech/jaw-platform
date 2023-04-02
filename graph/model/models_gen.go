@@ -20,6 +20,10 @@ type ReportClause struct {
 	Selections []*ReportSelection `json:"selections"`
 }
 
+type ReportData struct {
+	Rows []map[string]interface{} `json:"rows"`
+}
+
 type Column struct {
 	Name string `json:"name"`
 	Type string `json:"type"`

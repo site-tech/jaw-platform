@@ -3,7 +3,7 @@
 # https://gqlgen.com/getting-started/
 
 scalar Time
-scalar JSONObject
+scalar Map
 
 input DBConnection {
 	host: String!
@@ -35,8 +35,12 @@ input ReportClause {
 	selections: [reportSelection!]!
 }
 
+type ReportData {
+	rows: [Map!]!
+}
+
 extend type Query {
 	jaw: User!
 	dbConnection(cred: DBConnection): FlatTable!
-	buildReport(clause: ReportClause): JSONObject!
+	buildReport(clause: ReportClause): ReportData!
 }
